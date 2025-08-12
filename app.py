@@ -126,34 +126,62 @@ class SchedulerConfig(db.Model):
 # 初始化数据库
 def init_database():
     with app.app_context():
-        db.create_all()
+        try:
+            db.create_all()
+            print("数据库表创建成功")
+        except Exception as e:
+            print(f"创建数据库表失败: {e}")
+            return
         
         # 检查是否有默认账号
-        if Account.query.count() == 0:
-            default_account = Account(
-                account='tbh2356@126.com',
-                password='112233qq',
-                name='tbh2356@126.com'
-            )
-            db.session.add(default_account)
+        try:
+            if Account.query.count() == 0:
+                default_account = Account(
+                    account='tbh2356@126.com',
+                    password='112233qq',
+                    name='tbh2356@126.com'
+                )
+                db.session.add(default_account)
+                print("默认账号已添加")
+            else:
+                print("已存在账号，跳过添加默认账号")
+        except Exception as e:
+            print(f"添加默认账号失败: {e}")
         
         # 检查是否有默认邮箱配置
-        if EmailConfig.query.count() == 0:
-            default_email = EmailConfig(
-                smtp_server='smtp.email.cn',
-                smtp_port=465,
-                sender_email='18@HH.email.cn',
-                sender_password='yuHKfnKvCqmw6HNN',
-                receiver_email='Steven@HH.email.cn'
-            )
-            db.session.add(default_email)
+        try:
+            if EmailConfig.query.count() == 0:
+                default_email = EmailConfig(
+                    smtp_server='smtp.email.cn',
+                    smtp_port=465,
+                    sender_email='18@HH.email.cn',
+                    sender_password='yuHKfnKvCqmw6HNN',
+                    receiver_email='Steven@HH.email.cn'
+                )
+                db.session.add(default_email)
+                print("默认邮箱配置已添加")
+            else:
+                print("已存在邮箱配置，跳过添加默认邮箱配置")
+        except Exception as e:
+            print(f"添加默认邮箱配置失败: {e}")
         
         # 检查是否有默认调度配置
-        if SchedulerConfig.query.count() == 0:
-            default_scheduler = SchedulerConfig()
-            db.session.add(default_scheduler)
+        try:
+            if SchedulerConfig.query.count() == 0:
+                default_scheduler = SchedulerConfig()
+                db.session.add(default_scheduler)
+                print("默认调度配置已添加")
+            else:
+                print("已存在调度配置，跳过添加默认调度配置")
+        except Exception as e:
+            print(f"添加默认调度配置失败: {e}")
         
-        db.session.commit()
+        try:
+            db.session.commit()
+            print("数据库提交成功")
+        except Exception as e:
+            print(f"数据库提交失败: {e}")
+            db.session.rollback()
 
 # 自动登录类
 class AutoLogin:
@@ -509,16 +537,30 @@ scheduler = BackgroundScheduler()
 def scheduled_login():
     """定时登录任务"""
     with app.app_context():
-        logger.info("执行定时登录任务...")
-        accounts = Account.query.filter_by(is_active=True).all()
-        
-        for account in accounts:
-            try:
-                auto_login = AutoLogin(account.id)
-                auto_login.run_login()
-                time.sleep(3)
-            except Exception as e:
-                logger.error(f"处理账号 [{account.name}] 时发生异常: {str(e)}")
+        print("执行定时登录任务...")
+        try:
+            accounts = Account.query.filter_by(is_active=True).all()
+            print(f"找到 {len(accounts)} 个活跃账号")
+            
+            if not accounts:
+                print("没有找到活跃账号，跳过登录")
+                return
+            
+            for account in accounts:
+                try:
+                    print(f"正在处理账号: {account.name}")
+                    auto_login = AutoLogin(account.id)
+                    auto_login.run_login()
+                    print(f"账号 {account.name} 处理完成")
+                    time.sleep(3)
+                except Exception as e:
+                    print(f"处理账号 [{account.name}] 时发生异常: {str(e)}")
+                    # 继续处理下一个账号
+                    continue
+            
+            print("定时登录任务执行完成")
+        except Exception as e:
+            print(f"定时登录任务发生异常: {str(e)}")
 
 # 路由
 @app.route('/')
@@ -678,36 +720,65 @@ def update_scheduler():
     """更新调度器配置"""
     global scheduler
     
-    # 清除现有任务
-    scheduler.remove_all_jobs()
-    
-    config = SchedulerConfig.query.first()
-    if config and config.is_enabled:
-        # 添加定时任务
-        scheduler.add_job(
-            scheduled_login,
-            trigger=CronTrigger(hour=config.hour1, minute=config.minute1),
-            id='login1'
-        )
-        scheduler.add_job(
-            scheduled_login,
-            trigger=CronTrigger(hour=config.hour2, minute=config.minute2),
-            id='login2'
-        )
+    try:
+        print("正在更新调度器配置...")
         
-        logger.info(f"调度器已更新: {config.hour1}:{config.minute1}, {config.hour2}:{config.minute2}")
+        # 清除现有任务
+        scheduler.remove_all_jobs()
+        print("已清除现有任务")
+        
+        config = SchedulerConfig.query.first()
+        if config and config.is_enabled:
+            print(f"添加定时任务: {config.hour1}:{config.minute1}, {config.hour2}:{config.minute2}")
+            # 添加定时任务
+            scheduler.add_job(
+                scheduled_login,
+                trigger=CronTrigger(hour=config.hour1, minute=config.minute1),
+                id='login1'
+            )
+            scheduler.add_job(
+                scheduled_login,
+                trigger=CronTrigger(hour=config.hour2, minute=config.minute2),
+                id='login2'
+            )
+            print("定时任务添加成功")
+        else:
+            print("调度器未启用或配置不存在")
+        
+        print("调度器配置更新完成")
+    except Exception as e:
+        print(f"更新调度器配置失败: {str(e)}")
 
 # 初始化函数
 def init_app():
+    print("开始初始化应用...")
+    
     # 初始化数据库
+    print("正在初始化数据库...")
     init_database()
     
     # 启动调度器
-    scheduler.start()
+    print("正在启动调度器...")
+    try:
+        scheduler.start()
+        print("调度器启动成功")
+        
+        # 更新调度器配置
+        print("正在更新调度器配置...")
+        update_scheduler()
+        print("调度器配置更新完成")
+    except Exception as e:
+        print(f"调度器启动失败: {e}")
     
     # 立即执行一次登录
-    logger.info("立即执行一次登录...")
-    scheduled_login()
+    print("正在执行首次登录...")
+    try:
+        scheduled_login()
+        print("首次登录执行完成")
+    except Exception as e:
+        print(f"首次登录执行失败: {e}")
+    
+    print("应用初始化完成！")
 
 if __name__ == '__main__':
     init_app()

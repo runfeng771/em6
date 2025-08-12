@@ -1,0 +1,73 @@
+/* 本地自定义样式 */
+/* 主要样式已经在HTML中通过CDN加载 */
+
+/* 额外的自定义样式 */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+    .main-container {
+        margin: 10px;
+        padding: 15px;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .btn-group .btn {
+        margin-bottom: 5px;
+    }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    }
+    
+    .main-container {
+        background: rgba(52, 73, 94, 0.95);
+        color: #ecf0f1;
+    }
+    
+    .card {
+        background: rgba(44, 62, 80, 0.8);
+        color: #ecf0f1;
+    }
+    
+    .form-control, .form-select {
+        background: rgba(52, 73, 94, 0.8);
+        color: #ecf0f1;
+        border-color: #34495e;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        background: rgba(52, 73, 94, 0.9);
+        color: #ecf0f1;
+    }
+    
+    .table {
+        color: #ecf0f1;
+    }
+    
+    .table thead th {
+        background: rgba(44, 62, 80, 0.9);
+    }
+}

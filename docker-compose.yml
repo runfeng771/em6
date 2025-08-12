@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  auto-login:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./logs:/app/logs
+      - ./instance:/app/instance
+    environment:
+      - FLASK_ENV=production
+      - SECRET_KEY=your-secret-key-here
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/keep_alive"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
